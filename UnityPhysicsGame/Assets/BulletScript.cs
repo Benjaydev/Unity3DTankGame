@@ -42,7 +42,11 @@ public class BulletScript : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-
+        TankScript tank = collision.gameObject.GetComponent<TankScript>();
+        if(tank != null)
+        {
+            tank.Death();
+        }
     }
 
     public static void AddToPool(BulletScript bullet)
