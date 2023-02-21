@@ -8,20 +8,23 @@ public class PlayerScript : TankScript
 
     [SerializeField]
     private GameObject marker;
-    [SerializeField]
-    private LayerMask markerLayers;
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+    // Update is called once per frame
+    protected override void Update()
+    {
+        base.Update();
         float vAxis = Input.GetAxis("Vertical") * speed * Time.deltaTime;
         float hAxis = Input.GetAxis("Horizontal") * turnSpeed * Time.deltaTime;
         float rAxis = Input.GetAxis("Rotate") * barrelTurnSpeed * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y");
 
         //Debug.Log(rAxis);
-        controller.Move(transform.forward * vAxis);
-        transform.Rotate(new Vector3(0, hAxis, 0));
+        controller.Move(freeBody.transform.forward * vAxis + new Vector3(0, -9.8f * Time.deltaTime, 0));
+        freeBody.transform.Rotate(new Vector3(0, hAxis, 0));
 
 
         barrelParent.transform.RotateAround(barrelParent.transform.position, transform.up, rAxis);

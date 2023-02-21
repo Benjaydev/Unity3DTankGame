@@ -26,25 +26,43 @@ public class TankScript : MonoBehaviour
     [SerializeField]
     protected GameObject barrel;
 
+    [SerializeField]
+    protected GameObject bodyParent;
+    [SerializeField]
+    protected GameObject freeBody;
 
     [SerializeField]
     protected GameObject bulletPrefab;
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField]
+    protected string bulletType = "Player";
+
+    [SerializeField]
+    protected LayerMask markerLayers;
+
+    private Quaternion targetLocation;
 
     // Update is called once per frame
-    void Update()
+    virtual protected void Update()
     {
-        
+        RaycastHit hit;
+        if(Physics.Raycast(transform.position, -transform.up, out hit, 100, markerLayers))
+        {
+            targetLocation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+        }
+
+        bodyParent.transform.rotation = Quaternion.Lerp(bodyParent.transform.rotation, targetLocation, Time.deltaTime);
     }
 
     protected void Shoot()
     {
-        BulletScript bullet = Instantiate(bulletPrefab).GetComponent<BulletScript>();
+        BulletScript bullet = BulletScript.SpawnBullet(bulletType, bulletPrefab);
         bullet.transform.position = barrelParent.transform.position;
         bullet.rb.velocity = barrel.transform.forward * 100f;
+    }
+
+
+    public virtual void Death()
+    {
+
     }
 }
