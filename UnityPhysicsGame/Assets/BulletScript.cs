@@ -7,6 +7,7 @@ public class BulletScript : MonoBehaviour
     public Rigidbody rb;
     public Collider col;
     
+    public TrailRenderer trailRenderer;
 
     public static Dictionary<string, List<BulletScript>> inactiveBullets = new Dictionary<string, List<BulletScript>>();
     public static Dictionary<string, List<BulletScript>> activeBullets = new Dictionary<string, List<BulletScript>>();
@@ -28,6 +29,7 @@ public class BulletScript : MonoBehaviour
     public void DestroyBullet()
     {
         AddToPool(this);
+        trailRenderer.Clear();
     }
     private void Update()
     {
@@ -46,6 +48,7 @@ public class BulletScript : MonoBehaviour
         if(tank != null)
         {
             tank.Death();
+            DestroyBullet();
         }
     }
 

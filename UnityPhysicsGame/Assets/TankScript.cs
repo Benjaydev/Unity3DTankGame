@@ -19,6 +19,12 @@ public class TankScript : MonoBehaviour
     protected float lookRangeMax = 90f;
 
     [SerializeField]
+    private float shootCooldown = 0.3f;
+    private float shootCooldownCount = 0f;
+
+
+
+    [SerializeField]
     protected CharacterController controller;
 
     [SerializeField]
@@ -41,9 +47,14 @@ public class TankScript : MonoBehaviour
 
     private Quaternion targetLocation;
 
+    public bool isDead = false;
+
     // Update is called once per frame
     virtual protected void Update()
     {
+        shootCooldownCount += Time.deltaTime;
+
+
         RaycastHit hit;
         if(Physics.Raycast(transform.position, -transform.up, out hit, 100, markerLayers))
         {
@@ -55,9 +66,14 @@ public class TankScript : MonoBehaviour
 
     protected void Shoot()
     {
-        BulletScript bullet = BulletScript.SpawnBullet(bulletType, bulletPrefab);
-        bullet.transform.position = barrelParent.transform.position;
-        bullet.rb.velocity = barrel.transform.forward * 100f;
+        if(shootCooldownCount >= shootCooldown)
+        {
+            shootCooldownCount = 0;
+            BulletScript bullet = BulletScript.SpawnBullet(bulletType, bulletPrefab);
+            bullet.transform.position = barrelParent.transform.position;
+            bullet.rb.velocity = barrel.transform.forward * 100f;
+        }
+
     }
 
 
