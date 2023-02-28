@@ -34,18 +34,25 @@ public class EnemyScript : TankScript
     [SerializeField]
     private ParticleSystem explosionParticles;
 
+    public static List<EnemyScript> activeEnemies = new List<EnemyScript>();
+
+
+    private int currentPathPos = 0;
+
     private void Awake()
     {
         if(player == null)
         {
             player = FindObjectOfType<PlayerScript>();
         }
+        activeEnemies.Add(this);
     }
 
     // Start is called before the first frame update
     private void Start()
     {
-        
+        navMeshAgent.updatePosition = true;
+        navMeshAgent.updateRotation = false;
     }
 
     // Update is called once per frame
@@ -55,28 +62,42 @@ public class EnemyScript : TankScript
 
         // Set AI destination
         navMeshAgent.destination = player.transform.position;
-        navMeshAgent.updatePosition = false;
-        navMeshAgent.updateRotation = false;
         // Get direction to next position in path
-        Vector3 nextPosDir = (navMeshAgent.nextPosition - transform.position).normalized;
+        Vector3 nextPosDir = currentPathPos < navMeshAgent.path.corners.Length - 1 ? (navMeshAgent.path.corners[currentPathPos + 1] - transform.position) : Vector3.zero;
+        Vector3 nextPosDirNorm = nextPosDir.normalized;
         // Get desired rotation to face next position
-        Quaternion targetRotation = Quaternion.LookRotation(nextPosDir, Vector3.up);
+        Quaternion targetRotation = Quaternion.LookRotation(nextPosDirNorm, Vector3.up);
 
         // Rotate to desired rotation
         transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime);
-        float angle = Vector3.Dot(transform.forward, nextPosDir);
+        float angle = Vector3.Dot(transform.forward, nextPosDirNorm);
 
-        if(angle >= 0.99f)
+        // If enemy is facing the next path point, move
+        if (angle >= 0.99f)
         {
-            controller.Move(nextPosDir * Time.deltaTime * speed + new Vector3(0, -9.8f * Time.deltaTime, 0));
+            controller.Move(nextPosDirNorm * Time.deltaTime * speed + new Vector3(0, -9.8f * Time.deltaTime, 0));
+        }
+        // If has reached next path point
+        if (nextPosDir.sqrMagnitude <= 1)
+        {
+            if (currentPathPos < navMeshAgent.path.corners.Length - 1)
+            {
+                currentPathPos++;
+            }
+
         }
 
+
+        // Get direction to player
         Vector3 dirToPlayer = player.transform.position - transform.position;
         Vector3 dirToPlayerNorm = (player.transform.position - transform.position).normalized;
+        // Get target direction to face player 
         Quaternion targetBarrelRotation = Quaternion.LookRotation(dirToPlayerNorm, Vector3.up);
 
+        // Lerp barrel rotation towards target
         barrelParent.transform.rotation = Quaternion.Lerp(barrelParent.transform.rotation, targetBarrelRotation, Time.deltaTime * barrelTurnSpeed);
 
+        // If angle is within acceptance range of player and enemy is close enough, shoot
         float barrelAngle = Vector3.Dot(barrelParent.transform.forward, dirToPlayerNorm);
         if (barrelAngle > 1 - barrelRotateAcceptance && dirToPlayer.sqrMagnitude <= shootRange* shootRange)
         {
@@ -90,6 +111,8 @@ public class EnemyScript : TankScript
         {
             return;
         }
+        activeEnemies.Remove(this);
+
 
         player.AddPoints();
 
@@ -103,10 +126,10 @@ public class EnemyScript : TankScript
         explosionParticles.Play();
 
         // Disable tank
+        navMeshAgent.updatePosition = false;
         enabled = false;
         transform.position -= new Vector3(0, 100, 0);
         StartCoroutine(DestroyTank());
-
 
     }
 
@@ -115,7 +138,7 @@ public class EnemyScript : TankScript
         yield return new WaitForSeconds(10);
         Destroy(ragdoll);
         Destroy(explosionParticles.gameObject);
-        Destroy(this);
+        Destroy(gameObject);
 
         EnemySpawner.instance.enemiesInScene--;
     }

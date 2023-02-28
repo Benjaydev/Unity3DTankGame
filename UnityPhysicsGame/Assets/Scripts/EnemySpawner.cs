@@ -29,7 +29,6 @@ public class EnemySpawner : MonoBehaviour
     }
     private void Update()
     {
-        Debug.Log(enemiesInScene);
         if(enemiesInScene < maxEnemiesInScene)
         {
             Vector3 pos = spawnPoints[Random.Range(0, spawnPoints.Length - 1)].position;

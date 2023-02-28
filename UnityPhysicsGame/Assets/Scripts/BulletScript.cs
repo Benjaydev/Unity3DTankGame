@@ -17,8 +17,12 @@ public class BulletScript : MonoBehaviour
     public float destroyCooldownCount = 0f;
 
     public string bulletType = "Player";
-    private int poolPosition = 0;
-    
+
+    public TankScript owner;
+
+    [SerializeField]
+    public TankScript trackingTarget;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -30,15 +34,44 @@ public class BulletScript : MonoBehaviour
     {
         AddToPool(this);
         trailRenderer.Clear();
+        trackingTarget = null;
     }
     private void Update()
     {
+        if(trackingTarget != null)
+        {
+            Vector3 diff = (trackingTarget.transform.position - transform.position);
+            float mag = diff.magnitude;
+            Vector3 norm = (diff / mag);
+            
+            if(mag <= 10)
+            {
+                rb.velocity = norm * 100;
+            }
+            else
+            {
+                rb.velocity += norm * Time.deltaTime * 500;
+            }
+        }
+
+
         destroyCooldownCount += Time.deltaTime;
         if(destroyCooldownCount >= destroyCooldown)
         {
             DestroyBullet();
 
         }
+    }
+
+    public void SetTrackingTarget(TankScript target)
+    {
+        trackingTarget = target;
+        //StartCoroutine(SetTrackingTargetEn(target));
+    }
+    IEnumerator SetTrackingTargetEn(TankScript target)
+    {
+        yield return new WaitForSeconds(0.25f);
+        trackingTarget = target;
     }
 
 
@@ -49,12 +82,18 @@ public class BulletScript : MonoBehaviour
         {
             tank.Death();
             DestroyBullet();
+            owner.BulletHitCallback(this, true);
         }
+        else
+        {
+            owner.BulletHitCallback(this, false);
+        }
+        
     }
 
     public static void AddToPool(BulletScript bullet)
-    {
-        activeBullets[bullet.bulletType].RemoveAt(bullet.poolPosition);
+    {   
+        activeBullets[bullet.bulletType].Remove(bullet);
         inactiveBullets[bullet.bulletType].Add(bullet);
         bullet.gameObject.SetActive(false);
     }
@@ -83,7 +122,6 @@ public class BulletScript : MonoBehaviour
 
         activeBullets[type].Add(bullet);
         bullet.destroyCooldownCount = 0f;
-
         return bullet;
     }
 

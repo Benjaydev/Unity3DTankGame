@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Timeline;
+using static UnityEngine.UI.GridLayoutGroup;
 
 public class TankScript : MonoBehaviour
 {
@@ -17,6 +18,8 @@ public class TankScript : MonoBehaviour
     [SerializeField]
     [Range(0, 360)]
     protected float lookRangeMax = 90f;
+    [Range(0, -360)]
+    protected float lookRangeMin = -30;
 
     [SerializeField]
     private float shootCooldown = 0.3f;
@@ -64,7 +67,7 @@ public class TankScript : MonoBehaviour
         bodyParent.transform.rotation = Quaternion.Lerp(bodyParent.transform.rotation, targetLocation, Time.deltaTime);
     }
 
-    protected void Shoot()
+    protected BulletScript Shoot()
     {
         if(shootCooldownCount >= shootCooldown)
         {
@@ -72,10 +75,18 @@ public class TankScript : MonoBehaviour
             BulletScript bullet = BulletScript.SpawnBullet(bulletType, bulletPrefab);
             bullet.transform.position = barrelParent.transform.position;
             bullet.rb.velocity = barrel.transform.forward * 100f;
+            bullet.owner = this;
+            return bullet;
         }
+        return null;
 
     }
 
+
+    public virtual void BulletHitCallback(BulletScript bullet, bool hasHitTank)
+    {
+
+    }
 
     public virtual void Death()
     {
