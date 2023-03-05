@@ -19,6 +19,8 @@ public class UIScript : MonoBehaviour
 
     [SerializeField]
     private Image explosiveImage;
+    [SerializeField]
+    private Image trackingImage;
 
     Dictionary<string, Image> pointsDictionary = new Dictionary<string, Image>();
 
@@ -27,6 +29,7 @@ public class UIScript : MonoBehaviour
         airstrikeBarColour = airstrikeProgressBar.color;
 
         pointsDictionary["Explosive"] = explosiveImage;
+        pointsDictionary["Tracking"] = trackingImage;
     }
 
     public void SetIcon(string type, bool state)

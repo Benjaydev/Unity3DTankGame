@@ -226,17 +226,32 @@ public class PlayerScript : TankScript
         {
             StartCoroutine(ActivateExplosiveShots());
         }
+        else if(type == "Tracking")
+        {
+            StartCoroutine(ActivateTrackingShots());
+        }
     }
 
     IEnumerator ActivateExplosiveShots()
     {
+        // Stop any existing versions of this coroutine
+        StopCoroutine("ActivateExplosiveShots");
         explosiveShots = true;
         uiScript.SetIcon("Explosive", true);
         yield return new WaitForSeconds(explosiveShotsDuration);
         explosiveShots = false;
         uiScript.SetIcon("Explosive", false);
     }
-
+    IEnumerator ActivateTrackingShots()
+    {
+        // Stop any existing versions of this coroutine
+        StopCoroutine("ActivateTrackingShots");
+        trackingShots = true;
+        uiScript.SetIcon("Tracking", true);
+        yield return new WaitForSeconds(trackingShotsDuration);
+        trackingShots = false;
+        uiScript.SetIcon("Tracking", false);
+    }
 
     public void AddPoints()
     {
