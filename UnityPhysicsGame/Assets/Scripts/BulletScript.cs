@@ -30,6 +30,12 @@ public class BulletScript : MonoBehaviour
 
     }
 
+    public static void ClearBulletCache()
+    {
+        inactiveBullets = new Dictionary<string, List<BulletScript>>();
+        activeBullets = new Dictionary<string, List<BulletScript>>();
+    }
+
     public void DestroyBullet()
     {
         AddToPool(this);
@@ -100,7 +106,7 @@ public class BulletScript : MonoBehaviour
 
     public static BulletScript SpawnBullet(string type, GameObject prefab)
     {
-        BulletScript bullet;
+        BulletScript bullet = null;
         // If pool of type doesn't exist yet
         if (!activeBullets.ContainsKey(type))
         {
@@ -112,17 +118,26 @@ public class BulletScript : MonoBehaviour
         {
             bullet = inactiveBullets[type][0];
             inactiveBullets[type].RemoveAt(0);
-            bullet.gameObject.SetActive(true);
-
         }
         else
         {
             bullet = Instantiate(prefab).GetComponent<BulletScript>();
         }
 
-        activeBullets[type].Add(bullet);
-        bullet.destroyCooldownCount = 0f;
-        return bullet;
+        // If bullet is not null
+        if(bullet != null)
+        {
+            bullet.gameObject.SetActive(true);
+            activeBullets[type].Add(bullet);
+            bullet.destroyCooldownCount = 0f;
+            return bullet;
+        }
+        // Else, retry spawn
+        else
+        {
+            return SpawnBullet(type, prefab);
+        }
+
     }
 
 

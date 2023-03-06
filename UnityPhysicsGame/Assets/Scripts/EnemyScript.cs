@@ -49,10 +49,17 @@ public class EnemyScript : TankScript
     }
 
     // Start is called before the first frame update
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
         navMeshAgent.updatePosition = true;
         navMeshAgent.updateRotation = false;
+
+    }
+
+    public static void ClearEnemyCache()
+    {
+        activeEnemies = new List<EnemyScript>();
     }
 
     // Update is called once per frame
@@ -62,21 +69,25 @@ public class EnemyScript : TankScript
 
         // Set AI destination
         navMeshAgent.destination = player.transform.position;
+        currentPathPos=0;
         // Get direction to next position in path
-        Vector3 nextPosDir = currentPathPos < navMeshAgent.path.corners.Length - 1 ? (navMeshAgent.path.corners[currentPathPos + 1] - transform.position) : Vector3.zero;
+        Vector3 nextPosDir = navMeshAgent.path.corners.Length > 1 ? (navMeshAgent.path.corners[1] - transform.position) : transform.forward;
         Vector3 nextPosDirNorm = nextPosDir.normalized;
         // Get desired rotation to face next position
-        Quaternion targetRotation = Quaternion.LookRotation(nextPosDirNorm, Vector3.up);
+        Debug.DrawLine(transform.position, transform.position + nextPosDir);
 
+
+        Quaternion targetRotation = Quaternion.LookRotation(nextPosDirNorm, transform.up);
+
+
+        Debug.Log(targetRotation + "|" + transform.rotation);
         // Rotate to desired rotation
-        transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime);
-        float angle = Vector3.Dot(transform.forward, nextPosDirNorm);
+        transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime*20);
+        //float angle = Mathf.Acos(Vector2.Dot(check1, check2));
 
-        // If enemy is facing the next path point, move
-        if (angle >= 0.99f)
-        {
-            controller.Move(nextPosDirNorm * Time.deltaTime * speed + new Vector3(0, -9.8f * Time.deltaTime, 0));
-        }
+
+        controller.Move(nextPosDirNorm * Time.deltaTime * speed + new Vector3(0, -9.8f * Time.deltaTime, 0));
+
         // If has reached next path point
         if (nextPosDir.sqrMagnitude <= 1)
         {
@@ -92,7 +103,7 @@ public class EnemyScript : TankScript
         Vector3 dirToPlayer = player.transform.position - transform.position;
         Vector3 dirToPlayerNorm = (player.transform.position - transform.position).normalized;
         // Get target direction to face player 
-        Quaternion targetBarrelRotation = Quaternion.LookRotation(dirToPlayerNorm, Vector3.up);
+        Quaternion targetBarrelRotation = dirToPlayerNorm == Vector3.zero ? barrelParent.transform.rotation : Quaternion.LookRotation(dirToPlayerNorm, Vector3.up);
 
         // Lerp barrel rotation towards target
         barrelParent.transform.rotation = Quaternion.Lerp(barrelParent.transform.rotation, targetBarrelRotation, Time.deltaTime * barrelTurnSpeed);
@@ -107,7 +118,7 @@ public class EnemyScript : TankScript
 
     public override void Death()
     {
-        if (isDead)
+        if (isDead || isInvulnerable)
         {
             return;
         }

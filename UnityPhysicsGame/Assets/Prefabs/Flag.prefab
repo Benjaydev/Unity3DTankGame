@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 9048132081148614142}
   - component: {fileID: 2554712725382951938}
   - component: {fileID: 4978991816904131029}
-  - component: {fileID: 8691488270093425533}
   - component: {fileID: 7064755596774009678}
+  - component: {fileID: 3811945752448079004}
   m_Layer: 0
   m_Name: Flag
   m_TagString: Untagged
@@ -86,19 +86,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &8691488270093425533
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7044312778179730431}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &7064755596774009678
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -115,6 +102,20 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!136 &3811945752448079004
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7044312778179730431}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1001 &1029538487661127242
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -182,6 +183,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 90
       objectReference: {fileID: 0}
+    - target: {fileID: 857805485575110854, guid: af6685a0103f227458a6cc15a53c4c6c, type: 3}
+      propertyPath: m_SphereColliders.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 857805485575110854, guid: af6685a0103f227458a6cc15a53c4c6c, type: 3}
+      propertyPath: m_CapsuleColliders.Array.data[0]
+      value: 
+      objectReference: {fileID: 3811945752448079004}
     - target: {fileID: 857805485575110854, guid: af6685a0103f227458a6cc15a53c4c6c, type: 3}
       propertyPath: m_Coefficients.Array.data[0].maxDistance
       value: 0.2

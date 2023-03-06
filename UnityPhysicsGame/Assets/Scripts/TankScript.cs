@@ -48,9 +48,21 @@ public class TankScript : MonoBehaviour
     [SerializeField]
     protected LayerMask markerLayers;
 
-    private Quaternion targetLocation;
-
     public bool isDead = false;
+
+    public bool isInvulnerable = true;
+
+    protected virtual void Start()
+    {
+        StartCoroutine(Invulnerable());
+    }
+    IEnumerator Invulnerable()
+    {
+        isInvulnerable = true;
+        yield return new WaitForSeconds(1);
+        isInvulnerable = false;
+    }
+
 
     // Update is called once per frame
     virtual protected void Update()
@@ -58,13 +70,6 @@ public class TankScript : MonoBehaviour
         shootCooldownCount += Time.deltaTime;
 
 
-        RaycastHit hit;
-        if(Physics.Raycast(transform.position, -transform.up, out hit, 100, markerLayers))
-        {
-            targetLocation = Quaternion.FromToRotation(Vector3.up, hit.normal);
-        }
-
-        bodyParent.transform.rotation = Quaternion.Lerp(bodyParent.transform.rotation, targetLocation, Time.deltaTime);
     }
 
     protected BulletScript Shoot()
@@ -90,6 +95,10 @@ public class TankScript : MonoBehaviour
 
     public virtual void Death()
     {
+        if (!isInvulnerable)
+        {
+            isDead = true;
+        }
 
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,7 +21,7 @@ public class PlayerScript : TankScript
     [SerializeField]
     private ParticleSystem airstrikeExplosion;
     [SerializeField]
-    private float airstrikeRadius = 10f;
+    private float airstrikeRadius = 20f;
 
     private int points = 0;
     private float killMultiplier = 1f;
@@ -41,8 +42,9 @@ public class PlayerScript : TankScript
     public LayerMask trackingLayers;
 
 
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
         UnityEngine.Cursor.lockState = CursorLockMode.Locked;
         originalCameraPosition = airstrikeCamera.transform.position;
 
@@ -50,11 +52,28 @@ public class PlayerScript : TankScript
         uiScript.UpdateAirstrikeProgress(airstrikeProgress);
 
         instance = this;
+        EnemyScript.ClearEnemyCache();
+        BulletScript.ClearBulletCache();
     }
     // Update is called once per frame
     protected override void Update()
     {
         base.Update();
+
+        if (isDead)
+        {
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            uiScript.TogglePause();
+        }
+
+        if (uiScript.isPaused)
+        {
+            return;
+        }
 
         if (airstrikeProgress >= 1 && Input.GetKeyDown(KeyCode.T))
         {
@@ -78,11 +97,11 @@ public class PlayerScript : TankScript
             Physics.Raycast(airstrikeCamera.transform.position, worldPosition - airstrikeCamera.transform.position, out airHit);
             Debug.DrawLine(airstrikeCamera.transform.position, airstrikeCamera.transform.position + (worldPosition - airstrikeCamera.transform.position) * 1000, Color.red);
             marker.transform.position = airHit.point;
-            marker.transform.localScale = new Vector3(10, 10, 10);
+            marker.transform.localScale = new Vector3(30, 30, 30);
 
             if (Input.GetMouseButtonDown(0))
             {
-                SpawnExplosion(airHit.point);
+                SpawnExplosion(airHit.point, 2);
 
                 EndAirstrike();
             }
@@ -91,6 +110,18 @@ public class PlayerScript : TankScript
         }
         // Reset marker size
         marker.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+
+        Quaternion floorRot = transform.rotation;
+        RaycastHit floorHit;
+        if (Physics.Raycast(transform.position, -transform.up, out floorHit, 100, markerLayers))
+        {
+            floorRot = Quaternion.FromToRotation(Vector3.up, floorHit.normal);
+        }
+
+        bodyParent.transform.rotation = Quaternion.Lerp(bodyParent.transform.rotation, floorRot, Time.deltaTime);
+
+
 
         float vAxis = Input.GetAxis("Vertical") * speed * Time.deltaTime;
         float hAxis = Input.GetAxis("Horizontal") * turnSpeed * Time.deltaTime;
@@ -151,19 +182,23 @@ public class PlayerScript : TankScript
                 Debug.DrawLine(bulletHit.point, bulletHit.point+Vector3.up*20, Color.red);
 
                 // Find the closest enemy to that looking point
-                EnemyScript closestEnemy = EnemyScript.activeEnemies[0];
-                float closestDist = (closestEnemy.transform.position - bulletHit.point).sqrMagnitude;
-                for(int i = 1; i < EnemyScript.activeEnemies.Count; i++)
+                EnemyScript closestEnemy = EnemyScript.activeEnemies.Count > 0 ? EnemyScript.activeEnemies[0] : null;
+                if(closestEnemy != null)
                 {
-                    float dist = (EnemyScript.activeEnemies[i].transform.position - bulletHit.point).sqrMagnitude;
-                    if (dist < closestDist)
+                    float closestDist = (closestEnemy.transform.position - bulletHit.point).sqrMagnitude;
+                    for (int i = 1; i < EnemyScript.activeEnemies.Count; i++)
                     {
-                        closestEnemy = EnemyScript.activeEnemies[i];
-                        closestDist = dist;
+                        float dist = (EnemyScript.activeEnemies[i].transform.position - bulletHit.point).sqrMagnitude;
+                        if (dist < closestDist)
+                        {
+                            closestEnemy = EnemyScript.activeEnemies[i];
+                            closestDist = dist;
+                        }
                     }
+                    // Set target to closest
+                    bullet.SetTrackingTarget(closestEnemy);
                 }
-                // Set target to closest
-                bullet.SetTrackingTarget(closestEnemy);
+
             }
         }
 
@@ -182,12 +217,14 @@ public class PlayerScript : TankScript
         }
     }
 
-    public void SpawnExplosion(Vector3 position)
+    public void SpawnExplosion(Vector3 position, float scale = 1)
     {
         // Spawn explosion effect
         GameObject explosion = Instantiate(explosionEffect);
+        explosion.transform.localScale *= scale;
         explosion.transform.position = position;
         ParticleSystem particles = explosion.GetComponent<ParticleSystem>();
+        particles.transform.localScale *= scale;
         particles.Play();
 
         // Destroy explosion effect
@@ -220,6 +257,18 @@ public class PlayerScript : TankScript
         }
     }
 
+    public override void Death()
+    {
+        base.Death();
+        if (!isInvulnerable)
+        {
+            uiScript.ActivateDeathScreen();
+            UnityEngine.Cursor.lockState = CursorLockMode.Confined;
+        }
+
+
+    }
+
     public void TriggerPowerup(string type)
     {
         if(type == "Explosive")
@@ -229,6 +278,11 @@ public class PlayerScript : TankScript
         else if(type == "Tracking")
         {
             StartCoroutine(ActivateTrackingShots());
+        }
+        else if(type == "Multiplier")
+        {
+            killMultiplier *= 2;
+            uiScript.UpdatePointsMultiplier(killMultiplier);
         }
     }
 
@@ -260,6 +314,8 @@ public class PlayerScript : TankScript
         airstrikeProgress = Mathf.Min(airstrikeProgress + 0.1f, 1);
         uiScript.UpdatePoints(points);
         uiScript.UpdateAirstrikeProgress(airstrikeProgress);
+
+        uiScript.UpdatePointsMultiplier(killMultiplier);
     }
 
     public void StartAirstrike()
