@@ -76,15 +76,10 @@ public class EnemyScript : TankScript
         // Get desired rotation to face next position
         Debug.DrawLine(transform.position, transform.position + nextPosDir);
 
-
         Quaternion targetRotation = Quaternion.LookRotation(nextPosDirNorm, transform.up);
 
-
-        Debug.Log(targetRotation + "|" + transform.rotation);
         // Rotate to desired rotation
         transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, Time.deltaTime*20);
-        //float angle = Mathf.Acos(Vector2.Dot(check1, check2));
-
 
         controller.Move(nextPosDirNorm * Time.deltaTime * speed + new Vector3(0, -9.8f * Time.deltaTime, 0));
 
